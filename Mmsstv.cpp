@@ -127,7 +127,7 @@ USEFORM("TH5Len.cpp", TH5LenDlg);
 USEUNIT("Hamlog5.cpp");
 USEFORM("RMenuDlg.cpp", RMenuDialog);
 //---------------------------------------------------------------------------
-WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
+int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
 	LPSTR pCmd = GetCommandLine();
     if( strstr(pCmd, "-Z") == NULL ){

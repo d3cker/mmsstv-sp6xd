@@ -46,7 +46,7 @@
 */
 #define VERBETA "A"
 #define	VERID	"Ver 1.13"
-#define	VERTTL2	"MMSSTV "VERID VERBETA
+#define	VERTTL2	"MMSSTV " VERID VERBETA
 #define	VERTTL  VERTTL2" (C) JE3HHT 2001-2010."
 
 #define	CLOCKMAX	48500
@@ -402,7 +402,11 @@ typedef struct {
 	TColor		m_MaskCol1;
 	TColor		m_MaskCol2;
 
-    int			m_bCQ100;
+	int			m_bCQ100;
+
+	AnsiString m_log4omAddress;
+	int m_log4omPort;
+	int m_log4omEnable;
 }SYSSET;
 
 extern	SYSSET	sys;

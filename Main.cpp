@@ -555,6 +555,8 @@ else         // Windows 95 -- No build numbers provided
 
 	sys.m_FixedTxMode = 1;
 
+	sys.m_log4omAddress = "";
+
 	sys.m_TextList[0] = "CQ SSTV";
 	sys.m_TextList[1] = "%c";
 	sys.m_TextList[2] = "ur %r";
@@ -1792,11 +1794,16 @@ void __fastcall TMmsstv::ReadRegister(void)
 	else {
 		pDem->m_Repeater = 0;
 	}
+	//XD Options
+	sys.m_log4omAddress = pIniFile->ReadString("XDOptions", "Address", "127.0.0.1");
+	sys.m_log4omPort = pIniFile->ReadInteger("XDOptions", "Port", 2333);
+	sys.m_log4omEnable = pIniFile->ReadInteger("XDOptions", "Enable", 0);
+
 	delete pIniFile;
 	if( IniVer < INIVER ){
-    	sys.m_PicClipView = 1;
+		sys.m_PicClipView = 1;
 		sys.m_PicClipColor = clBlack;
-    }
+	}
 }
 //---------------------------------------------------------------------------
 // ƒŒƒWƒXƒgƒŠ‚Ö‚Ì‘‚«ž‚Ý
@@ -2250,6 +2257,11 @@ void __fastcall TMmsstv::WriteRegister(void)
 			pIniFile->WriteInteger("Repeater", "QuietnessTime", sys.m_RepQuietnessTime);
 			pIniFile->WriteString("Repeater", "Folder", sys.m_RepFolder);
 		}
+
+		pIniFile->WriteString("XDOptions", "Address", sys.m_log4omAddress);
+		pIniFile->WriteString("XDOptions", "Port", sys.m_log4omPort);
+		pIniFile->WriteString("XDOptions", "Enable", sys.m_log4omEnable);
+
 		pIniFile->UpdateFile();
 		delete pIniFile;
 

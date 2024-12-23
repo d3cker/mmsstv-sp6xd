@@ -1229,3 +1229,105 @@ void __fastcall TOptionDlg::DevNoChange(TObject *Sender)
 	CBCalWayClick(Sender);
 }
 //---------------------------------------------------------------------------
+
+
+
+
+void __fastcall TOptionDlg::PortEditKeyPress(TObject *Sender, System::WideChar &Key)
+{
+	// Allow only digits and backspace
+	if (!isdigit(Key) && Key != VK_BACK)
+	{
+		Key = 0;  // Block any other input
+	}
+}
+
+void __fastcall TOptionDlg::PortEditChange(TObject *Sender)
+{
+	try {
+		// If text is empty, do nothing
+		if (PortEdit->Text.IsEmpty())
+			return;
+
+		// Convert text to number
+		int portNum = PortEdit->Text.ToInt();
+
+		// Check if number is valid port
+		if (portNum < 1 || portNum > 65535)
+		{
+			// If invalid, set to maximum port
+			PortEdit->Text = "2333";
+			// Move cursor to end
+			PortEdit->SelStart = PortEdit->Text.Length();
+		}
+	}
+	catch (...) {
+		// If conversion fails, reset to 1
+		if (!PortEdit->Text.IsEmpty())
+		{
+			PortEdit->Text = "1";
+			PortEdit->SelStart = PortEdit->Text.Length();
+		}
+	}
+}
+
+void __fastcall TOptionDlg::AddressEditKeyPress(TObject *Sender, System::WideChar &Key)
+{
+	// Allow only digits, dots, and backspace
+	if (!isdigit(Key) && Key != '.' && Key != VK_BACK)
+	{
+		Key = 0;
+	}
+}
+//---------------------------------------------------------------------------
+
+
+void __fastcall TOptionDlg::AddressEditExit(TObject *Sender)
+{
+	try {
+		UnicodeString text = AddressEdit->Text;
+
+		// Split by dots
+		int start = 1;
+		int octetCount = 0;
+
+		while (start <= text.Length())
+		{
+			int dotPos = text.SubString(start, text.Length()).Pos(".");
+			UnicodeString octetStr;
+
+			if (dotPos == 0) // Last or only octet
+			{
+				octetStr = text.SubString(start, text.Length() - start + 1);
+				start = text.Length() + 1;
+			}
+			else
+			{
+				octetStr = text.SubString(start, dotPos - 1);
+				start += dotPos;
+			}
+
+			// Check if octet is valid
+			if (octetStr.IsEmpty() || octetStr.ToInt() < 0 || octetStr.ToInt() > 255)
+			{
+				AddressEdit->Text = "127.0.0.1";
+				return;
+			}
+
+			octetCount++;
+		}
+
+		// Check if we have exactly 4 octets
+		if (octetCount != 4)
+		{
+			AddressEdit->Text = "127.0.0.1";
+		}
+	}
+	catch (...)
+	{
+		AddressEdit->Text = "127.0.0.1";
+	}
+}
+
+//---------------------------------------------------------------------------
+

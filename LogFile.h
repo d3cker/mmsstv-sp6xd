@@ -217,7 +217,7 @@ public:
 
 	void MakeIndex(void);
 
-	inline IsEdit(void){return m_EditFlag;};
+	inline bool IsEdit(void){return m_EditFlag;};
 	void MakePathName(LPCSTR pName);
 	void MakeName(LPCSTR pName);
 	inline LPCSTR GetName(void){return m_Name.c_str();};
