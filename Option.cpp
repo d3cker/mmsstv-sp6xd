@@ -134,7 +134,7 @@ __fastcall TOptionDlg::TOptionDlg(TComponent* AOwner)
 		if( !pWave->m_tOutDevName[i].IsEmpty() ){
 			DevNoOut->Items->Add(pWave->m_tOutDevName[i]);
         }
-    }
+	}
 
 	m_MMListW.QueryList("MMW");
 	for( int i = 0; i < m_MMListW.GetCount(); i++ ){
@@ -220,7 +220,7 @@ void __fastcall TOptionDlg::UpdateUI(void)
 	Label6->Enabled = f;
     DevNoOut->Enabled = f;
 
-    CBSTX->Visible = (Source->ItemIndex != 0);
+	CBSTX->Visible = (Source->ItemIndex != 0);
 }
 
 int __fastcall TOptionDlg::Execute(CSSTVDEM *fp, CSSTVMOD *mp)
@@ -282,9 +282,14 @@ int __fastcall TOptionDlg::Execute(CSSTVDEM *fp, CSSTVMOD *mp)
 	RxFifo->Text = sys.m_SoundFifoRX;
 	TxFifo->Text = sys.m_SoundFifoTX;
 	SoundPriority->ItemIndex = sys.m_SoundPriority;
+	//XD Options
+	AddressEdit->Text = sys.m_log4omAddress;
+	PortEdit->Text = sys.m_log4omPort;
+	Log4OMCheckBox->Checked = sys.m_log4omEnable;
+
 
 	{
-	   	AnsiString as = sys.m_SoundDevice.c_str();
+		AnsiString as = sys.m_SoundDevice.c_str();
 		LPSTR p, t;
 
 		p = StrDlm(t, as.c_str());
@@ -481,7 +486,7 @@ int __fastcall TOptionDlg::Execute(CSSTVDEM *fp, CSSTVMOD *mp)
                 as += in;
                 as += "\x22";
             }
-            sys.m_SoundDevice = as;
+			sys.m_SoundDevice = as;
 		}
         else {
 			AnsiString as;
@@ -611,6 +616,10 @@ int __fastcall TOptionDlg::Execute(CSSTVDEM *fp, CSSTVMOD *mp)
 		sys.m_VOXSound = m_VOXSound.c_str();
 
 		sys.m_Priority = AppPriority->ItemIndex;
+		//XD Options
+		sys.m_log4omAddress = AddressEdit->Text.c_str();
+		sys.m_log4omPort = PortEdit->Text.ToInt();
+		sys.m_log4omEnable = Log4OMCheckBox->Checked;
 	}
 	else {
 		r = FALSE;
@@ -1330,4 +1339,5 @@ void __fastcall TOptionDlg::AddressEditExit(TObject *Sender)
 }
 
 //---------------------------------------------------------------------------
+
 

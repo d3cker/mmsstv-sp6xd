@@ -1169,6 +1169,9 @@ LPCSTR CLogFile::GetDateString(SDMMLOG *sp, int sw)
 			case 5:			// mm-dd-yyyy
 				sprintf(bf, "%02u.%02u.%04u", sp->date/100, sp->date%100, YEAR(sp->year));
 				break;
+			case 6:			// yyyymmdd - XD Options
+				sprintf(bf, "%04u%02u%02u", YEAR(sp->year), sp->date/100, sp->date%100);
+				break;
 			default:		// yy-mm-dd
 				sprintf(bf, "%02u.%02u.%02u", sp->year, sp->date/100, sp->date%100);
 				break;

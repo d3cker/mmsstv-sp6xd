@@ -19,7 +19,7 @@
 
 //---------------------------------------------------------------------------
 #include <vcl.h>
-#pragma hdrstop                   
+#pragma hdrstop
 
 #include <SHELLAPI.H>
 #include <io.h>
@@ -48,6 +48,7 @@
 #include "MmcgDlg.h"
 #include "radioset.h"
 #include "RMenuDlg.h"
+#include "UDPSender.h"
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 #pragma resource "*.dfm"
@@ -7945,6 +7946,51 @@ void __fastcall TMmsstv::SBQSOClick(TObject *Sender)
 		Log.PutData(&Log.m_sd, Log.m_CurNo);
 		LogLink.Write(&Log.m_sd, 2);
 
+		//XD Options Log4OM send UDP
+		if(sys.m_log4omEnable) {
+			UDPSender* sender = new UDPSender();
+
+			if (!sender->IsInitialized()) {
+				ShowMessage("Failed to initialize UDP sender");
+				delete sender;
+				return;
+			}
+
+//			const char* message = "<call:6>SP6XD <qso_date:8>20241223 <time_on:6>133456 <mode:3>SSTV <freq:7>14.233 <rst_sent:3>595 <rst_rcvd:3>595 <eor>";
+
+			AnsiString adifMessage;
+			JSTtoUTC(&Log.m_sd);
+
+			adifMessage.sprintf(
+					"<call:%d>%s "
+					"<freq:%d>%s "
+					"<mode:%d>%s "
+					"<qso_date:%d>%s "
+					"<time_on:%d>%s "
+					"<time_off:%d>%s "
+					"<rst_sent:%d>%s "
+					"<rst_rcvd:%d>%s "
+					"<eor>",
+//				strlen(AnsiString(HisCall->Text).c_str()), AnsiString(HisCall->Text).c_str(),
+					strlen(Log.m_sd.call), Log.m_sd.call,
+					strlen(Log.GetFreqString(Log.m_sd.band,Log.m_sd.fq)), Log.GetFreqString(Log.m_sd.band,Log.m_sd.fq),
+					strlen(Log.GetModeString(Log.m_sd.mode)), Log.GetModeString(Log.m_sd.mode),
+					strlen(Log.GetDateString(&Log.m_sd,6)), Log.GetDateString(&Log.m_sd,6),
+					strlen(Log.GetTimeString(Log.m_sd.btime)), Log.GetTimeString(Log.m_sd.btime),
+					strlen(Log.GetTimeString(Log.m_sd.etime)), Log.GetTimeString(Log.m_sd.etime),
+					strlen(Log.m_sd.ur), Log.m_sd.ur,
+					strlen(Log.m_sd.my), Log.m_sd.my
+			);
+
+			bool success = sender->SendPacket(sys.m_log4omAddress.c_str(), sys.m_log4omPort , adifMessage.c_str(), strlen(adifMessage.c_str()));
+
+			if (success) {
+				ShowMessage("Packet sent successfully");
+			}
+
+			delete sender;
+		}
+
 		memcpy(&Log.m_asd, &Log.m_sd, sizeof(Log.m_asd));
 		Log.m_CurNo++;
 		Log.m_CurChg = 0;
@@ -7953,6 +7999,7 @@ void __fastcall TMmsstv::SBQSOClick(TObject *Sender)
 		UpdateTextData();
 		AutoLogSave();
 		if( HisCall->CanFocus() ) HisCall->SetFocus();
+
 	}
 	UpdateUI();
 }
