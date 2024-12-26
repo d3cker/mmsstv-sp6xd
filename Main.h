@@ -42,7 +42,9 @@
 #include "PrevView.h"
 #include "CtrBtn.h"
 #include "StockVew.h"
-//#include <OleCtnrs.hpp>
+#include <System.ImageList.hpp>
+
+#include <Vcl.ImgList.hpp>//#include <OleCtnrs.hpp>
 #define STOCKPAGE   4
 #define STOCKMAX    300
 #define DFFTSIZE    768
@@ -547,6 +549,8 @@ __published:	// IDE 管理のコンポーネント
 	TMenuItem *NRadioE;
 	TMenuItem *NCWE;
 	TMenuItem *KCWADD;
+	TButton *PSKSendReport;
+	TTimer *PSKTimer;
 	void __fastcall FormPaint(TObject *Sender);
 	
 	void __fastcall TimerTimer(TObject *Sender);
@@ -895,7 +899,7 @@ __published:	// IDE 管理のコンポーネント
 	
 	void __fastcall SBListMouseDown(TObject *Sender, TMouseButton Button,
           TShiftState Shift, int X, int Y);
-	
+
 	void __fastcall PBoxLvlMouseDown(TObject *Sender, TMouseButton Button,
           TShiftState Shift, int X, int Y);
 	void __fastcall SBTXIDClick(TObject *Sender);
@@ -909,7 +913,7 @@ __published:	// IDE 管理のコンポーネント
 	void __fastcall KRCCClick(TObject *Sender);
 	
 	void __fastcall SBPLClick(TObject *Sender);
-	
+
 	
 	
 	
@@ -932,6 +936,9 @@ __published:	// IDE 管理のコンポーネント
 	void __fastcall KRadioAddClick(TObject *Sender);
 	void __fastcall KRadioClick(TObject *Sender);
 	void __fastcall KCWADDClick(TObject *Sender);
+	void __fastcall PSKSendReportClick(TObject *Sender);
+	void __fastcall PSKTimerTimer(TObject *Sender);
+
 private:	// ユーザー宣言
 	int     m_InitFirst;
 	int     m_DisEvent;
@@ -1432,4 +1439,4 @@ extern PACKAGE TMmsstv *Mmsstv;
 //---------------------------------------------------------------------------
 #endif
 
- 
+

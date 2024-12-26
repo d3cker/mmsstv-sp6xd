@@ -209,6 +209,16 @@ __published:
 	TLabel *Label8;
 	TEdit *PortEdit;
 	TCheckBox *Log4OMCheckBox;
+	TGroupBox *GroupBox1;
+	TLabel *Label15;
+	TEdit *PSKHostname;
+	TStaticText *PortBox;
+	TEdit *PSKPort;
+	TCheckBox *PSKEnable;
+	TCheckBox *PSKAuto;
+	TCheckBox *PSKQso;
+	TStaticText *PSKLocatorText;
+	TEdit *PSKMyLocator;
 	void __fastcall DispTxBpfClick(TObject *Sender);
 	void __fastcall PortNameChange(TObject *Sender);
 	
@@ -249,12 +259,16 @@ __published:
 	void __fastcall SBTestMouseDown(TObject *Sender, TMouseButton Button,
 		  TShiftState Shift, int X, int Y);
 	void __fastcall DevNoChange(TObject *Sender);
-
+// XD options
 	void __fastcall PortEditKeyPress(TObject *Sender, System::WideChar &Key);
 	void __fastcall PortEditChange(TObject *Sender);
 	void __fastcall AddressEditKeyPress(TObject *Sender, System::WideChar &Key);
 	void __fastcall AddressEditExit(TObject *Sender);
-//	void __fastcall AddressEditChange(TObject *Sender);
+	void __fastcall PSKEnableClick(TObject *Sender);
+	void __fastcall PSKPortKeyPress(TObject *Sender, System::WideChar &Key);
+	void __fastcall PSKPortChange(TObject *Sender);
+	void __fastcall PSKMyLocatorChange(TObject *Sender);
+	void __fastcall PSKMyLocatorExit(TObject *Sender);
 
 private:
 	int	m_DisEvent;
@@ -298,4 +312,4 @@ public:
 //extern TAgcSetDlg *AgcSetDlg;
 extern int PageIndex;
 //----------------------------------------------------------------------------
-#endif    
+#endif

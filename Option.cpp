@@ -30,6 +30,7 @@
 #include "LinearDs.h"
 #include "MacroKey.h"
 #include "TextEdit.h"
+#include "PSKReporter.h"
 //---------------------------------------------------------------------
 #pragma resource "*.dfm"
 int PageIndex = 0;
@@ -218,7 +219,7 @@ void __fastcall TOptionDlg::UpdateUI(void)
     SetGroupEnabled(GB1);
     Source->Enabled = f;
 	Label6->Enabled = f;
-    DevNoOut->Enabled = f;
+	DevNoOut->Enabled = f;
 
 	CBSTX->Visible = (Source->ItemIndex != 0);
 }
@@ -287,6 +288,16 @@ int __fastcall TOptionDlg::Execute(CSSTVDEM *fp, CSSTVMOD *mp)
 	PortEdit->Text = sys.m_log4omPort;
 	Log4OMCheckBox->Checked = sys.m_log4omEnable;
 
+	PSKHostname->Text = sys.m_PSKHostname.c_str();
+    PSKMyLocator->Text = sys.m_PSKMyLocator.c_str();
+	PSKPort->Text = sys.m_PSKPort;
+	PSKEnable->Checked = sys.m_PSKEnable;
+	PSKAuto->Checked = sys.m_PSKAuto;
+	PSKQso->Checked = sys.m_PSKQso;
+
+	PSKAuto->Enabled = sys.m_PSKEnable;
+	PSKQso->Enabled = sys.m_PSKEnable;
+
 
 	{
 		AnsiString as = sys.m_SoundDevice.c_str();
@@ -297,16 +308,16 @@ int __fastcall TOptionDlg::Execute(CSSTVDEM *fp, CSSTVMOD *mp)
 		if( ATOI(dd, t) ){
 			switch(dd){
 				case -1:
-                    DevNo->Text = "Default";
-                	break;
-                case -2:
-                	break;
-                default:
+					DevNo->Text = "Default";
+					break;
+				case -2:
+					break;
+				default:
 					DevNo->Text = t;
-                	break;
-            }
-        }
-        else {
+					break;
+			}
+		}
+		else {
 			DevNo->Text = t;
         }
 
@@ -317,7 +328,7 @@ int __fastcall TOptionDlg::Execute(CSSTVDEM *fp, CSSTVMOD *mp)
 			switch(dd){
 				case -1:
                     DevNoOut->Text = "Default";
-                	break;
+					break;
                 case -2:
                 	break;
                 default:
@@ -481,7 +492,7 @@ int __fastcall TOptionDlg::Execute(CSSTVDEM *fp, CSSTVMOD *mp)
                 as += out;
                 as += "\x22";
             }
-            else {
+			else {
 				as += "\x22";
                 as += in;
                 as += "\x22";
@@ -620,6 +631,13 @@ int __fastcall TOptionDlg::Execute(CSSTVDEM *fp, CSSTVMOD *mp)
 		sys.m_log4omAddress = AddressEdit->Text.c_str();
 		sys.m_log4omPort = PortEdit->Text.ToInt();
 		sys.m_log4omEnable = Log4OMCheckBox->Checked;
+
+		sys.m_PSKHostname = PSKHostname->Text.c_str();
+        sys.m_PSKMyLocator = PSKMyLocator->Text.c_str();
+		sys.m_PSKPort = PSKPort->Text.ToInt();
+		sys.m_PSKEnable = PSKEnable->Checked;
+		sys.m_PSKAuto = PSKAuto->Checked;
+		sys.m_PSKQso = PSKQso->Checked;
 	}
 	else {
 		r = FALSE;
@@ -637,13 +655,13 @@ void __fastcall TOptionDlg::DispTxBpfClick(TObject *Sender)
 	if( !tap ) tap = 2;
 
 	int lfq = 700 + g_dblToneOffset;
-    int hfq = 2700 + g_dblToneOffset;
-    if( lfq < 100 ){
+	int hfq = 2700 + g_dblToneOffset;
+	if( lfq < 100 ){
 		MakeFilter(HBPF, tap, ffLPF, SampFreq, hfq, hfq, 40, 1.0);
-    }
-    else {
+	}
+	else {
 		MakeFilter(HBPF, tap, ffBPF, SampFreq, lfq, hfq, 40, 1.0);
-    }
+	}
 
 	TFreqDispDlg *pBox = new TFreqDispDlg(this);
 	pBox->Execute(HBPF, tap, 1);
@@ -1340,4 +1358,145 @@ void __fastcall TOptionDlg::AddressEditExit(TObject *Sender)
 
 //---------------------------------------------------------------------------
 
+
+void __fastcall TOptionDlg::PSKEnableClick(TObject *Sender)
+{
+	if(PSKMyLocator->Text.IsEmpty() && PSKEnable->Checked) {
+		PSKEnable->Checked = False;
+		ShowMessage("You must set up your QTH locator first!");
+		return;
+	}
+	int rc;
+	//According to the test code it's allowed to initialize multiple times.
+	if (PSKEnable->Checked) {
+		rc = ReporterInitialize(UnicodeString(sys.m_PSKHostname).c_str(),UnicodeString(IntToStr(sys.m_PSKPort)).c_str());
+		if (rc) {
+			  ShowMessage("PSKReporter initialization error");
+		} else {
+			  PSKAuto->Enabled = 1;
+			  PSKQso->Enabled = 1;
+		}
+	} else {
+		rc = ReporterUninitialize();
+		if (!rc) {
+			  ShowMessage("PSKReporter uninitialized");
+			  PSKAuto->Enabled = 0;
+			  PSKQso->Enabled = 0;
+		}
+	}
+}
+//---------------------------------------------------------------------------
+
+
+
+void __fastcall TOptionDlg::PSKPortKeyPress(TObject *Sender, System::WideChar &Key)
+
+{
+	// Allow only digits and backspace
+	if (!isdigit(Key) && Key != VK_BACK)
+	{
+		Key = 0;  // Block any other input
+	}
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TOptionDlg::PSKPortChange(TObject *Sender)
+{
+	try {
+		// If text is empty, do nothing
+		if (PSKPort->Text.IsEmpty())
+			return;
+
+		// Convert text to number
+		int portNum = PSKPort->Text.ToInt();
+
+		// Check if number is valid port
+		if (portNum < 1 || portNum > 65535)
+		{
+			// If invalid, set to maximum port
+			PSKPort->Text = "4739";
+			// Move cursor to end
+			PSKPort->SelStart = PSKPort->Text.Length();
+		}
+	}
+	catch (...) {
+		// If conversion fails, reset to 1
+		if (!PSKPort->Text.IsEmpty())
+		{
+			PSKPort->Text = "1";
+			PSKPort->SelStart = PSKPort->Text.Length();
+		}
+	}
+}
+//---------------------------------------------------------------------------
+
+
+void __fastcall TOptionDlg::PSKMyLocatorChange(TObject *Sender)
+{
+	// Get the edit control
+	TEdit* edit = dynamic_cast<TEdit*>(Sender);
+	if (!edit) return;
+
+	String text = edit->Text;
+	int curPos = edit->SelStart;
+	bool modified = false;
+
+	// Convert to uppercase
+	String upperText = text.UpperCase();
+	if (upperText != text) {
+		text = upperText;
+		modified = true;
+	}
+
+	// Remove invalid characters
+	String validText;
+	for (int i = 1; i <= text.Length(); i++) {
+		char c = text[i];
+		// First two chars must be A-R
+		if (i <= 2) {
+			if (c >= 'A' && c <= 'R') {
+				validText += c;
+			}
+		}
+		// Second two chars must be 0-9
+		else if (i <= 4) {
+			if (c >= '0' && c <= '9') {
+				validText += c;
+			}
+		}
+	}
+
+	// Truncate to 4 characters
+	if (validText.Length() > 4) {
+		validText = validText.SubString(1, 4);
+		modified = true;
+	}
+
+	// Update text if modified
+	if (validText != text) {
+		edit->Text = validText;
+		modified = true;
+	}
+
+	if (modified) {
+		// Preserve cursor position
+		edit->SelStart = std::min(curPos, validText.Length());
+	}
+}
+
+//---------------------------------------------------------------------------
+
+
+void __fastcall TOptionDlg::PSKMyLocatorExit(TObject *Sender)
+{
+	if(PSKMyLocator->Text.Length()<4) {
+		ShowMessage("Invalid locator. Must be 4 characters long.");
+		PSKEnable->Checked=0;
+		PSKMyLocator->Text="";
+	} else {
+		PSKMyLocator->Text = PSKMyLocator->Text.UpperCase();
+	}
+}
+
+//---------------------------------------------------------------------------
 

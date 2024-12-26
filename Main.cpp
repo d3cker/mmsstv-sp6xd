@@ -49,6 +49,7 @@
 #include "radioset.h"
 #include "RMenuDlg.h"
 #include "UDPSender.h"
+#include "PSKReporter.h"
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 #pragma resource "*.dfm"
@@ -303,7 +304,7 @@ else         // Windows 95 -- No build numbers provided
 		pBitmapNearest = new Graphics::TBitmap;
         pBitmapNearest->Width = 1;
         pBitmapNearest->Height = 1;
-    }
+	}
 
 	pBitmapFFT = new Graphics::TBitmap();
 	pBitmapFFT->Width = PBoxFFT->Width;
@@ -555,8 +556,9 @@ else         // Windows 95 -- No build numbers provided
 	sys.m_CWMenu[6] = "VVV";
 
 	sys.m_FixedTxMode = 1;
-
+//XD Options
 	sys.m_log4omAddress = "";
+	sys.m_PSKHostname = "";
 
 	sys.m_TextList[0] = "CQ SSTV";
 	sys.m_TextList[1] = "%c";
@@ -648,7 +650,7 @@ else         // Windows 95 -- No build numbers provided
 	if( IsFile(bf) ){
 		JanHelp = "MMSSTV.CHM";
     }
-    else {
+	else {
 		sprintf(bf, "%sMmsstv.hlp", BgnDir);
 		if( IsFile(bf) ) JanHelp = "MMSSTV.HLP";
     }
@@ -1218,6 +1220,13 @@ void __fastcall TMmsstv::KFileClick(TObject *Sender)
 // アイドル処理
 void __fastcall TMmsstv::UpdateUI(void)
 {
+	if (sys.m_PSKEnable && !sys.m_PSKMyLocator.IsEmpty() && !HisCall->Text.IsEmpty() ) {
+		PSKSendReport->Enabled = True;
+	} else {
+		PSKSendReport->Enabled = False;
+	}
+
+	
 	if( sys.m_AutoStop || pDem->m_SyncRestart || sys.m_AutoSync ){
 		SBLK->Down = FALSE;
 	}
@@ -1678,9 +1687,9 @@ void __fastcall TMmsstv::ReadRegister(void)
     if( (i >> 16) != sys.m_BitPixel ){
         sys.m_Temp24 = (sys.m_BitPixel >= 24);
     }
-    else {
+	else {
 		sys.m_Temp24 = i & 1;
-    }
+	}
 
 	sys.m_PicShape = pIniFile->ReadInteger("Pic", "Shape", sys.m_PicShape);
 	sys.m_PicAdjust = pIniFile->ReadInteger("Pic", "Adjust", sys.m_PicAdjust);
@@ -1764,7 +1773,7 @@ void __fastcall TMmsstv::ReadRegister(void)
 		sprintf(bf, "Cap%d", i+1);
         m_RadioMenu[i].strTTL = pIniFile->ReadString("RadioMenu", bf, m_RadioMenu[i].strTTL);
 		sprintf(bf, "Cmd%d", i+1);
-        m_RadioMenu[i].strCMD = pIniFile->ReadString("RadioMenu", bf, m_RadioMenu[i].strCMD);
+		m_RadioMenu[i].strCMD = pIniFile->ReadString("RadioMenu", bf, m_RadioMenu[i].strCMD);
     }
 
 // リピータ
@@ -1799,6 +1808,31 @@ void __fastcall TMmsstv::ReadRegister(void)
 	sys.m_log4omAddress = pIniFile->ReadString("XDOptions", "Address", "127.0.0.1");
 	sys.m_log4omPort = pIniFile->ReadInteger("XDOptions", "Port", 2333);
 	sys.m_log4omEnable = pIniFile->ReadInteger("XDOptions", "Enable", 0);
+
+	sys.m_PSKHostname = pIniFile->ReadString("XDOptions", "PSKHostname", "report.pskreporter.info");
+	sys.m_PSKPort = pIniFile->ReadInteger("XDOptions", "PSKPort", 4739);
+	sys.m_PSKMyLocator = pIniFile->ReadString("XDOptions", "PSKMyLocator", "");
+	sys.m_PSKEnable = pIniFile->ReadInteger("XDOptions", "PSKEnable", 0);
+	sys.m_PSKAuto = pIniFile->ReadInteger("XDOptions", "PSKAuto", 0);
+	sys.m_PSKQso = pIniFile->ReadInteger("XDOptions", "PSKQso", 0);
+	sys.m_PSKMyLocator = sys.m_PSKMyLocator.UpperCase();
+
+	ShowMessage("My locator: " + sys.m_PSKMyLocator);
+
+
+	if (sys.m_PSKEnable && !sys.m_PSKMyLocator.IsEmpty()) {
+		int rc;
+		rc = ReporterInitialize(UnicodeString(sys.m_PSKHostname).c_str(),UnicodeString(IntToStr(sys.m_PSKPort)).c_str());
+		if (rc) {
+			ShowMessage("PSKReporter initialization error");
+		} else {
+			PSKSendReport->Enabled = True;
+		}
+	} else {
+			PSKSendReport->Enabled = False;
+			sys.m_PSKEnable = 0; // this should work for empty locator condition... right?
+	}
+
 
 	delete pIniFile;
 	if( IniVer < INIVER ){
@@ -2222,7 +2256,7 @@ void __fastcall TMmsstv::WriteRegister(void)
 		for( i = 0; i < sys.m_nCWMenu; i++ ){
 			sprintf(bf, "M%d", i+1);
 			pIniFile->WriteString("CWMenu", bf, sys.m_CWMenu[i]);
-	    }
+		}
 
 //RadioMenu
 		try{
@@ -2259,9 +2293,18 @@ void __fastcall TMmsstv::WriteRegister(void)
 			pIniFile->WriteString("Repeater", "Folder", sys.m_RepFolder);
 		}
 
+//XD Options
 		pIniFile->WriteString("XDOptions", "Address", sys.m_log4omAddress);
-		pIniFile->WriteString("XDOptions", "Port", sys.m_log4omPort);
-		pIniFile->WriteString("XDOptions", "Enable", sys.m_log4omEnable);
+		pIniFile->WriteInteger("XDOptions", "Port", sys.m_log4omPort);
+		pIniFile->WriteInteger("XDOptions", "Enable", sys.m_log4omEnable);
+
+		pIniFile->WriteString("XDOptions", "PSKHostname", sys.m_PSKHostname);
+		pIniFile->WriteInteger("XDOptions", "PSKPort", sys.m_PSKPort);
+		pIniFile->WriteString("XDOptions", "PSKMyLocator", sys.m_PSKMyLocator);
+		pIniFile->WriteInteger("XDOptions", "PSKEnable", sys.m_PSKEnable);
+		pIniFile->WriteInteger("XDOptions", "PSKAuto", sys.m_PSKAuto);
+		pIniFile->WriteInteger("XDOptions", "PSKQso", sys.m_PSKQso);
+
 
 		pIniFile->UpdateFile();
 		delete pIniFile;
@@ -7977,15 +8020,15 @@ void __fastcall TMmsstv::SBQSOClick(TObject *Sender)
 					strlen(Log.GetModeString(Log.m_sd.mode)), Log.GetModeString(Log.m_sd.mode),
 					strlen(Log.GetDateString(&Log.m_sd,6)), Log.GetDateString(&Log.m_sd,6),
 					strlen(Log.GetTimeString(Log.m_sd.btime)), Log.GetTimeString(Log.m_sd.btime),
-					strlen(Log.GetTimeString(Log.m_sd.etime)), Log.GetTimeString(Log.m_sd.etime),
+					strlen(Log.GetTimeString(Log.m_sd.etime)), Log.GetTimeString(Log.m_sd.etime), // for some reason it has value of btime ...
 					strlen(Log.m_sd.ur), Log.m_sd.ur,
 					strlen(Log.m_sd.my), Log.m_sd.my
 			);
 
 			bool success = sender->SendPacket(sys.m_log4omAddress.c_str(), sys.m_log4omPort , adifMessage.c_str(), strlen(adifMessage.c_str()));
 
-			if (success) {
-				ShowMessage("Packet sent successfully");
+			if (!success) {
+				ShowMessage("Error sending UDP packet with log.");
 			}
 
 			delete sender;
@@ -10326,6 +10369,7 @@ void __fastcall TMmsstv::HisCallChange(TObject *Sender)
 {
 	TempDelay();
 	SBULog->Enabled = TRUE;
+	
 	UpdateUI();
 }
 //---------------------------------------------------------------------------
@@ -14509,15 +14553,95 @@ void __fastcall TMmsstv::KRadioAddClick(TObject *Sender)
             m_RadioMenu[m_nRadioMenu].strCMD = strCMD;
             m_nRadioMenu++;
             AdjustRadioMenu();
-        }
-    }
-    delete pBox;
+		}
+	}
+	delete pBox;
 }
 //---------------------------------------------------------------------------
 void __fastcall TMmsstv::KRadioClick(TObject *Sender)
 {
 	AdjustRadioMenu();
-    KRadioAdd->Enabled = m_nRadioMenu < RADIOMENUMAX;
+	KRadioAdd->Enabled = m_nRadioMenu < RADIOMENUMAX;
+}
+//---------------------------------------------------------------------------
+
+
+// I wanna hurt my face for this. It's late and  I have no power
+// to manage 32bit app and convert frequency values to double/float whatever.
+// I would really appreciate someone fixing this...
+AnsiString ConvertMHzToHzString(const AnsiString& mhzString) {
+	try {
+		if (mhzString.IsEmpty()) {
+			return "";
+		}
+
+		AnsiString result = mhzString;
+
+		// If there's no decimal point, add ".0"
+		if (result.Pos(".") == 0) {
+			result = result + ".0";
+		}
+
+		// Remove the decimal point
+		result = StringReplace(result, ".", "", TReplaceFlags());
+
+		// Calculate how many zeros we need to add
+		// Count digits after decimal in original string
+		int decimalPos = mhzString.Pos(".");
+		int digitsAfterDecimal = decimalPos > 0 ?
+			mhzString.Length() - decimalPos : 0;
+
+		// Add remaining zeros to reach Hz (need 6 zeros total for MHz to Hz)
+		int zerosNeeded = 6 - digitsAfterDecimal;
+		for(int i = 0; i < zerosNeeded; i++) {
+			result = result + "0";
+		}
+
+		return result;
+	}
+	catch (...) {
+		ShowMessage("Error in conversion");
+		return "";
+	}
+}
+
+
+void __fastcall TMmsstv::PSKSendReportClick(TObject *Sender)
+{
+	// station_callsign,SP6XD,my_gridsquare,JO81ih,programid,MMSSTV,programversion,v113a
+	//  call,SP6PWS,mode,SSTV,freq,14233000,snr,8
+	AnsiString hzString = ConvertMHzToHzString(LogFreq->Text);
+
+	UnicodeString localInformation =
+		"station_callsign," +
+		AnsiString(sys.m_Call) +
+		",my_gridsquare," +
+		AnsiString(sys.m_PSKMyLocator) +
+		",programid,MMSSTV-XD,programversion," +
+		AnsiString(VERID) + AnsiString(VERBETA);
+
+	UnicodeString remoteInformation =
+		"call," +
+		HisCall->Text +
+		",mode,SSTV,freq," +
+		hzString.c_str() +
+		",snr,0";
+
+	int rc = ReporterSeenCallsign(remoteInformation.c_str(),localInformation.c_str(), REPORTER_SOURCE_MANUAL);
+
+	ShowMessage(remoteInformation);
+	if(rc) {
+		ShowMessage("Error sending data to PSKReporter");
+	}
+
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TMmsstv::PSKTimerTimer(TObject *Sender)
+{
+	if(sys.m_PSKEnable) {
+		ReporterTickle();
+	}
 }
 //---------------------------------------------------------------------------
 
