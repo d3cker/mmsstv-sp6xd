@@ -50,6 +50,8 @@
 #include "RMenuDlg.h"
 #include "UDPSender.h"
 #include "PSKReporter.h"
+#include "XDOptions.h"
+
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 #pragma resource "*.dfm"
@@ -2320,6 +2322,44 @@ void __fastcall TMmsstv::WriteRegister(void)
 	sprintf(bf, "%sCurrent.bmp", StockDir);
 	SaveBitmap(pBitmapTXM, bf);
 }
+
+
+//XD Options helper function for freq string converstion
+AnsiString ConvertMHzToHzString(const AnsiString& mhzString) {
+	try {
+		if (mhzString.IsEmpty()) {
+			return "";
+		}
+
+		AnsiString result = mhzString;
+
+		// If there's no decimal point, add ".0"
+		if (result.Pos(".") == 0) {
+			result = result + ".0";
+		}
+
+		// Remove the decimal point
+		result = StringReplace(result, ".", "", TReplaceFlags());
+
+		// Calculate how many zeros we need to add
+		// Count digits after decimal in original string
+		int decimalPos = mhzString.Pos(".");
+		int digitsAfterDecimal = decimalPos > 0 ?
+			mhzString.Length() - decimalPos : 0;
+
+		// Add remaining zeros to reach Hz (need 6 zeros total for MHz to Hz)
+		int zerosNeeded = 6 - digitsAfterDecimal;
+		for(int i = 0; i < zerosNeeded; i++) {
+			result = result + "0";
+		}
+
+		return result;
+	}
+	catch (...) {
+		ShowMessage("Error in conversion");
+		return "";
+	}
+}
 //---------------------------------------------------------------------------
 void __fastcall TMmsstv::UpdateTitle(void)
 {
@@ -3359,7 +3399,7 @@ void __fastcall TMmsstv::TimerTimer(TObject *Sender)
 	if( sys.m_Repeater && !SBTX->Down && pDem->m_Repeater ){
 		Repeater();
 	}
-    g_ExecPB.Timer();
+	g_ExecPB.Timer();
 #if 0
 	CSSTVDEM *dp = &pSound->SSTVDEM;
 	CSYNCINT *si = &dp->m_sint2;
@@ -5286,7 +5326,7 @@ void __fastcall TMmsstv::RedrawAdjustSync(void)
             case smPD120:
             	k = 3.0;
             	break;
-            case smPD160:
+			case smPD160:
 				k = 2.0;
             	break;
             case smRM8:
@@ -5409,7 +5449,7 @@ void __fastcall TMmsstv::ShiftSSTV(TObject *Sender, int step)
     }
     else {
 		SSTVSET.m_OFS += step;
-    }
+	}
 	int e = 0;
 	switch(SSTVSET.m_Mode){
 		case smSCT1:
@@ -5614,7 +5654,7 @@ void __fastcall TMmsstv::UpdateModeBtn(void)
 		GBMode->Caption = "RX Mode";
 		GBMode->Font->Color = clBlack;
 //		SBAuto->Enabled = TRUE;
-        SBAuto->GroupIndex = 2;
+		SBAuto->GroupIndex = 2;
 		SBAuto->Down = (pDem->m_SyncMode >= 0);
 		if( pDem->m_Sync ){
 			f = FindModeAssign(m_ModeAssignRX, SSTVSET.m_Mode);
@@ -8034,6 +8074,11 @@ void __fastcall TMmsstv::SBQSOClick(TObject *Sender)
 			delete sender;
 		}
 
+		//XD Options - send report to PSKReporter on QSO
+/*		if(sys.m_PSKEnable && sys.m_PSKQso) {
+			SendPSKReport();
+		}
+*/
 		memcpy(&Log.m_asd, &Log.m_sd, sizeof(Log.m_asd));
 		Log.m_CurNo++;
 		Log.m_CurChg = 0;
@@ -12687,7 +12732,7 @@ void __fastcall TMmsstv::UpdateSBTO(void)
     BOOL f = ( ((dp->m_StgBuf != NULL) || WaveStg.IsOpen()) && (dp->m_wStgLine >= 16) && (SSTVSET.m_Mode != smAVT) ) ? TRUE : FALSE;
 	SBAdj->Enabled = f;
     SBPL->Enabled = f;
-    SBPR->Enabled = f;
+	SBPR->Enabled = f;
 }
 //---------------------------------------------------------------------------
 void __fastcall TMmsstv::SBTOClick(TObject *Sender)
@@ -14149,7 +14194,7 @@ void __fastcall TMmsstv::OnEditExit(TMessage Message)
 					UpdatePic();
                 }
             }
-        }
+		}
     }
 	else if( Message.LParam & 0x80000000 ){
 		if( g_ExecPB.IsChanged() ){
@@ -14203,7 +14248,7 @@ void __fastcall TMmsstv::AdjustCWMenu(void)
 		if( i >= max ){
 			TMenuItem *pm = new TMenuItem (this);
 			PopupCW->Items->Insert(i, pm);
-            max++;
+			max++;
         }
 		pm = PopupCW->Items->Items[i];
 		char bf[256];
@@ -14235,7 +14280,7 @@ void __fastcall TMmsstv::AdjustCWMenu(void)
 	N = i;
     for( ; i < max; i++ ){
 		KCWM->Delete(N);
-    }
+	}
 	BOOL f = sys.m_nCWMenu != 0;
 	NCW->Visible = f;
 	NCWE->Visible = f;
@@ -14278,7 +14323,7 @@ void __fastcall TMmsstv::PopupCWPopup(TObject *Sender)
 			KCWSI->Checked = TRUE;
 			break;
     }
-    if( KCWSI->Checked ){
+	if( KCWSI->Checked ){
 	    as = sys.m_CWIDWPM;
 	    as += " WPM ";
 	}
@@ -14321,7 +14366,7 @@ void __fastcall TMmsstv::KCWEditClick(TObject *Sender)
 				for( int i = n; i < (sys.m_nCWMenu - 1); i++ ){
 					sys.m_CWMenu[i] = sys.m_CWMenu[i+1];
                 }
-                sys.m_nCWMenu--;
+				sys.m_nCWMenu--;
             }
             else {
 				sys.m_CWMenu[n] = as;
@@ -14449,7 +14494,7 @@ void __fastcall TMmsstv::AdjustRadioMenu(void)
 	int N = i;
     for( ; i < max; i++ ){
 		KRadio->Delete(N);
-    }
+	}
 
     max = KRadioS->IndexOf(NRadioE);
 	for( i = 0; i < m_nRadioMenu; i++ ){
@@ -14531,7 +14576,7 @@ void __fastcall TMmsstv::KRadioEditClick(TObject *Sender)
 	            AdjustRadioMenu();
             }
         }
-        delete pBox;
+		delete pBox;
     }
 }
 //---------------------------------------------------------------------------
@@ -14569,72 +14614,19 @@ void __fastcall TMmsstv::KRadioClick(TObject *Sender)
 // I wanna hurt my face for this. It's late and  I have no power
 // to manage 32bit app and convert frequency values to double/float whatever.
 // I would really appreciate someone fixing this...
-AnsiString ConvertMHzToHzString(const AnsiString& mhzString) {
-	try {
-		if (mhzString.IsEmpty()) {
-			return "";
-		}
-
-		AnsiString result = mhzString;
-
-		// If there's no decimal point, add ".0"
-		if (result.Pos(".") == 0) {
-			result = result + ".0";
-		}
-
-		// Remove the decimal point
-		result = StringReplace(result, ".", "", TReplaceFlags());
-
-		// Calculate how many zeros we need to add
-		// Count digits after decimal in original string
-		int decimalPos = mhzString.Pos(".");
-		int digitsAfterDecimal = decimalPos > 0 ?
-			mhzString.Length() - decimalPos : 0;
-
-		// Add remaining zeros to reach Hz (need 6 zeros total for MHz to Hz)
-		int zerosNeeded = 6 - digitsAfterDecimal;
-		for(int i = 0; i < zerosNeeded; i++) {
-			result = result + "0";
-		}
-
-		return result;
-	}
-	catch (...) {
-		ShowMessage("Error in conversion");
-		return "";
-	}
-}
 
 
 void __fastcall TMmsstv::PSKSendReportClick(TObject *Sender)
 {
 	// station_callsign,SP6XD,my_gridsquare,JO81ih,programid,MMSSTV,programversion,v113a
 	//  call,SP6PWS,mode,SSTV,freq,14233000,snr,8
-	AnsiString hzString = ConvertMHzToHzString(LogFreq->Text);
-
-	UnicodeString localInformation =
-		"station_callsign," +
-		AnsiString(sys.m_Call) +
-		",my_gridsquare," +
-		AnsiString(sys.m_PSKMyLocator) +
-		",programid,MMSSTV-XD,programversion," +
-		AnsiString(VERID) + AnsiString(VERBETA);
-
-	UnicodeString remoteInformation =
-		"call," +
-		HisCall->Text +
-		",mode,SSTV,freq," +
-		hzString.c_str() +
-		",snr,0";
-
-	int rc = ReporterSeenCallsign(remoteInformation.c_str(),localInformation.c_str(), REPORTER_SOURCE_MANUAL);
-
-	ShowMessage(remoteInformation);
-	if(rc) {
-		ShowMessage("Error sending data to PSKReporter");
-	}
-
+	SendPSKReport* reportPSK = new SendPSKReport();
+	AnsiString verid = AnsiString(VERID) + AnsiString(VERBETA);
+	reportPSK->Send(AnsiString(sys.m_Call), HisCall->Text ,AnsiString(sys.m_PSKMyLocator), LogFreq->Text , verid, REPORTER_SOURCE_MANUAL);
+	delete reportPSK;
 }
+
+
 //---------------------------------------------------------------------------
 
 void __fastcall TMmsstv::PSKTimerTimer(TObject *Sender)

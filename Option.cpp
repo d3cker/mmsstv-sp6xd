@@ -1418,6 +1418,7 @@ void __fastcall TOptionDlg::PSKPortChange(TObject *Sender)
 			// Move cursor to end
 			PSKPort->SelStart = PSKPort->Text.Length();
 		}
+
 	}
 	catch (...) {
 		// If conversion fails, reset to 1
@@ -1498,5 +1499,45 @@ void __fastcall TOptionDlg::PSKMyLocatorExit(TObject *Sender)
 	}
 }
 
+//---------------------------------------------------------------------------
+
+void __fastcall TOptionDlg::PSKPortExit(TObject *Sender)
+{
+	sys.m_PSKPort = PSKPort->Text.ToInt();
+	int rc = ReporterInitialize(UnicodeString(sys.m_PSKHostname).c_str(),UnicodeString(IntToStr(sys.m_PSKPort)).c_str());
+	if (rc) {
+		  ShowMessage("PSKReporter initialization error");
+	}
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TOptionDlg::PSKHostnameExit(TObject *Sender)
+{
+	sys.m_PSKHostname = PSKHostname->Text;
+	int rc = ReporterInitialize(UnicodeString(sys.m_PSKHostname).c_str(),UnicodeString(IntToStr(sys.m_PSKPort)).c_str());
+	if (rc) {
+		  ShowMessage("PSKReporter initialization error");
+	}
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TOptionDlg::PSKQsoExit(TObject *Sender)
+{
+	if(PSKQso->Checked){
+		sys.m_PSKQso = 1;
+	} else {
+		sys.m_PSKQso = 0;
+	}
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TOptionDlg::PSKAutoExit(TObject *Sender)
+{
+	if(PSKAuto->Checked){
+		sys.m_PSKAuto = 1;
+	} else {
+		sys.m_PSKAuto = 0;
+    }
+}
 //---------------------------------------------------------------------------
 

@@ -269,6 +269,10 @@ __published:
 	void __fastcall PSKPortChange(TObject *Sender);
 	void __fastcall PSKMyLocatorChange(TObject *Sender);
 	void __fastcall PSKMyLocatorExit(TObject *Sender);
+	void __fastcall PSKPortExit(TObject *Sender);
+	void __fastcall PSKHostnameExit(TObject *Sender);
+	void __fastcall PSKQsoExit(TObject *Sender);
+	void __fastcall PSKAutoExit(TObject *Sender);
 
 private:
 	int	m_DisEvent;
