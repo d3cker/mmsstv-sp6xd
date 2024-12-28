@@ -6,8 +6,13 @@
 
 //#pragma comment(lib, "ws2_32.lib")
 
+
+
 class SendPSKReport {
 
+private:
+	void __fastcall SendPSKReport::TemporaryMessageTimer(TObject *Sender);
+	void ShowTemporaryMessage(String message, int milliseconds);
 public:
 	SendPSKReport();
 	~SendPSKReport();

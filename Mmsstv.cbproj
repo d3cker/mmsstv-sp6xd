@@ -81,7 +81,7 @@
         <VerInfo_Locale>1041</VerInfo_Locale>
         <DCC_Namespace>Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;System;Xml;Data;Datasnap;Web;Soap;$(DCC_Namespace)</DCC_Namespace>
         <LinkPackageStatics>rtl.lib;vcl.lib;inet.lib</LinkPackageStatics>
-        <IncludePath>jpeg\;$(IncludePath)</IncludePath>
+        <IncludePath>C:\Users\bartek\Desktop\PSKReporter\;jpeg\;$(IncludePath)</IncludePath>
         <PackageImports>vclx.bpi;rtl.bpi;vcl.bpi;dbrtl.bpi;vcldb.bpi;bdertl.bpi;vcldbx.bpi;bcbsmp.bpi;teeui.bpi;vclsmp.bpi;teedb.bpi;tee.bpi;ibsmp.bpi;inetdb.bpi;inet.bpi;$(PackageImports)</PackageImports>
         <DCC_UnitSearchPath>.\;$(BDS)\lib;$(BDS)\lib\obj;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <ILINK_AppType>Windows</ILINK_AppType>
@@ -98,7 +98,7 @@
         <TASM_AdditionalSwitches> /w2</TASM_AdditionalSwitches>
         <DCC_CBuilderOutput>JPHNE</DCC_CBuilderOutput>
         <DCC_AdditionalSwitches> -M</DCC_AdditionalSwitches>
-        <ILINK_LibraryPath>jpeg\;c:\program files\borland\cbuilder3\projects;jpeg;$(BDS)\lib\obj;$(BDS)\lib;$(BDS)\lib\psdk;$(ILINK_LibraryPath)</ILINK_LibraryPath>
+        <ILINK_LibraryPath>C:\Users\bartek\Desktop\PSKReporter\;jpeg\;c:\program files\borland\cbuilder3\projects;jpeg;$(BDS)\lib\obj;$(BDS)\lib;$(BDS)\lib\psdk;$(ILINK_LibraryPath)</ILINK_LibraryPath>
         <SanitizedProjectName>Mmsstv</SanitizedProjectName>
         <Icon_MainIcon>$(BDS)\bin\cbuilder_PROJECTICON.ico</Icon_MainIcon>
         <UWP_CppLogo44>$(BDS)\bin\Artwork\Windows\UWP\cppreg_UwpDefault_44.png</UWP_CppLogo44>
@@ -627,6 +627,14 @@
             <DependentOn>PrevView.h</DependentOn>
             <BuildOrder>78</BuildOrder>
         </CppCompile>
+        <None Include="PSKReporter.dll"/>
+        <None Include="PSKReporter.h">
+            <BuildOrder>109</BuildOrder>
+        </None>
+        <LibFiles Include="PSKReporter.lib" Condition="'$(Platform)'=='Win64x' Or '$(Platform)'=='Win32'">
+            <BuildOrder>111</BuildOrder>
+            <IgnorePath>true</IgnorePath>
+        </LibFiles>
         <CppCompile Include="Qsodlg.cpp">
             <BuildOrder>81</BuildOrder>
             <Form>QSODlgBox</Form>
@@ -714,6 +722,12 @@
             <DependentOn>Wave.h</DependentOn>
             <BuildOrder>6</BuildOrder>
         </CppCompile>
+        <CppCompile Include="XDOptions.cpp">
+            <BuildOrder>112</BuildOrder>
+        </CppCompile>
+        <None Include="XDOptions.h">
+            <BuildOrder>113</BuildOrder>
+        </None>
         <CppCompile Include="ZoomView.cpp">
             <BuildOrder>56</BuildOrder>
             <Form>ZoomViewDlg</Form>
@@ -721,37 +735,37 @@
             <BuildOrder>18</BuildOrder>
         </CppCompile>
         <FormResources Include="LogList.dfm"/>
-        <FormResources Include="LineSet.dfm"/>
-        <FormResources Include="ListText.dfm"/>
         <FormResources Include="LogPic.dfm"/>
-        <FormResources Include="MmcgDlg.dfm"/>
         <FormResources Include="LogSet.dfm"/>
         <FormResources Include="MacroKey.dfm"/>
         <FormResources Include="Main.dfm"/>
+        <FormResources Include="MmcgDlg.dfm"/>
+        <FormResources Include="ListText.dfm"/>
         <FormResources Include="LinearDs.dfm"/>
-        <FormResources Include="Scope.dfm"/>
-        <FormResources Include="RepSet.dfm"/>
-        <FormResources Include="RMenuDlg.dfm"/>
-        <FormResources Include="RxView.dfm"/>
+        <FormResources Include="LineSet.dfm"/>
         <FormResources Include="StockVew.dfm"/>
+        <FormResources Include="TextEdit.dfm"/>
+        <FormResources Include="RxView.dfm"/>
+        <FormResources Include="Scope.dfm"/>
+        <FormResources Include="TextIn.dfm"/>
         <FormResources Include="VerDsp.dfm"/>
         <FormResources Include="ZoomView.dfm"/>
-        <FormResources Include="TextEdit.dfm"/>
-        <FormResources Include="TextIn.dfm"/>
         <FormResources Include="TH5Len.dfm"/>
+        <FormResources Include="RMenuDlg.dfm"/>
         <FormResources Include="Option.dfm"/>
         <FormResources Include="PerSpect.dfm"/>
         <FormResources Include="PicFilte.dfm"/>
-        <FormResources Include="PrevView.dfm"/>
+        <FormResources Include="PicRect.dfm"/>
         <FormResources Include="Qsodlg.dfm"/>
         <FormResources Include="RadioSet.dfm"/>
-        <FormResources Include="PicRect.dfm"/>
+        <FormResources Include="RepSet.dfm"/>
         <FormResources Include="PicSel.dfm"/>
         <FormResources Include="PlayDlg.dfm"/>
+        <FormResources Include="PrevView.dfm"/>
         <FormResources Include="HistView.dfm"/>
         <FormResources Include="InputWin.dfm"/>
-        <FormResources Include="fileview.dfm"/>
         <FormResources Include="FreqDisp.dfm"/>
+        <FormResources Include="fileview.dfm"/>
         <FormResources Include="ColorSet.dfm"/>
         <FormResources Include="BitMask.dfm"/>
         <FormResources Include="ClockAdj.dfm"/>
@@ -831,6 +845,10 @@
                 <Source>
                     <Source Name="MainSource">Mmsstv.cpp</Source>
                 </Source>
+                <Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\bcboffice2k290.bpl">Embarcadero C++Builder Office 2000 Servers Package</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\bcbofficexp290.bpl">Embarcadero C++Builder Office XP Servers Package</Excluded_Packages>
+                </Excluded_Packages>
             </CPlusPlusBuilder.Personality>
             <Platforms>
                 <Platform value="Win32">True</Platform>
@@ -901,6 +919,18 @@
                     </Platform>
                 </DeployFile>
                 <DeployFile LocalName="Mmsstv.res" Configuration="Debug" Class="ProjectFile">
+                    <Platform Name="Win32">
+                        <RemoteDir>.\</RemoteDir>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="PSKReporter.dll" Configuration="Debug" Class="ProjectFile">
+                    <Platform Name="Win32">
+                        <RemoteDir>.\</RemoteDir>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="PSKReporter.lib" Configuration="Debug" Class="ProjectFile">
                     <Platform Name="Win32">
                         <RemoteDir>.\</RemoteDir>
                         <Overwrite>true</Overwrite>

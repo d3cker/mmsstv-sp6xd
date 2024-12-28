@@ -1819,7 +1819,7 @@ void __fastcall TMmsstv::ReadRegister(void)
 	sys.m_PSKQso = pIniFile->ReadInteger("XDOptions", "PSKQso", 0);
 	sys.m_PSKMyLocator = sys.m_PSKMyLocator.UpperCase();
 
-	ShowMessage("My locator: " + sys.m_PSKMyLocator);
+	//ShowMessage("My locator: " + sys.m_PSKMyLocator);
 
 
 	if (sys.m_PSKEnable && !sys.m_PSKMyLocator.IsEmpty()) {
@@ -3320,7 +3320,15 @@ void __fastcall TMmsstv::TimerTimer(TObject *Sender)
 					if( strcmp(AnsiString(HisCall->Text).c_str(), pDem->m_fskcall) ){	//ja7ude 0428
 						HisCall->Text = pDem->m_fskcall;
 						FindCall();
-	                    HisCallChange(NULL);
+						HisCallChange(NULL);
+						//XD Options - automatically send PSK report on FSKID decode
+						if(sys.m_PSKEnable && sys.m_PSKAuto) {
+							SendPSKReport* reportPSK = new SendPSKReport();
+							AnsiString verid = AnsiString(VERID) + AnsiString(VERBETA);
+							reportPSK->Send(AnsiString(sys.m_Call), HisCall->Text ,AnsiString(sys.m_PSKMyLocator), LogFreq->Text , verid, REPORTER_SOURCE_AUTOMATIC);
+							// | REPORTER_SOURCE_TENTATIVE
+							delete reportPSK;
+						}
 					}
 				}
 			}
@@ -8075,10 +8083,14 @@ void __fastcall TMmsstv::SBQSOClick(TObject *Sender)
 		}
 
 		//XD Options - send report to PSKReporter on QSO
-/*		if(sys.m_PSKEnable && sys.m_PSKQso) {
-			SendPSKReport();
+		if(sys.m_PSKEnable && sys.m_PSKQso) {
+			SendPSKReport* reportPSK = new SendPSKReport();
+			AnsiString verid = AnsiString(VERID) + AnsiString(VERBETA);
+			reportPSK->Send(AnsiString(sys.m_Call), AnsiString(Log.m_sd.call), AnsiString(sys.m_PSKMyLocator), AnsiString(Log.GetFreqString(Log.m_sd.band,Log.m_sd.fq)), verid, REPORTER_SOURCE_LOG);
+			delete reportPSK;
+
 		}
-*/
+
 		memcpy(&Log.m_asd, &Log.m_sd, sizeof(Log.m_asd));
 		Log.m_CurNo++;
 		Log.m_CurChg = 0;
@@ -10414,7 +10426,7 @@ void __fastcall TMmsstv::HisCallChange(TObject *Sender)
 {
 	TempDelay();
 	SBULog->Enabled = TRUE;
-	
+
 	UpdateUI();
 }
 //---------------------------------------------------------------------------
@@ -14315,7 +14327,7 @@ void __fastcall TMmsstv::PopupCWPopup(TObject *Sender)
             break;
         case 20:
 			KCWSL->Checked = TRUE;
-            break;
+			break;
         case 18:
 			KCWSLL->Checked = TRUE;
             break;
@@ -14487,7 +14499,7 @@ void __fastcall TMmsstv::AdjustRadioMenu(void)
 		pm = KRadio->Items[i];
 		if( pm->Caption != m_RadioMenu[i].strTTL ){
 			pm->Caption = m_RadioMenu[i].strTTL;
-        }
+		}
         pm->OnClick = KRadioCmdClick;
         pm->Enabled = pRadio != NULL;
     }
@@ -14530,7 +14542,7 @@ void __fastcall TMmsstv::KRadioCmdClick(TObject *Sender)
         }
         else {
 			pRadio->SendCommand(p);
-        }
+		}
     }
 }
 //---------------------------------------------------------------------------
@@ -14573,7 +14585,7 @@ void __fastcall TMmsstv::KRadioEditClick(TObject *Sender)
 	            m_RadioMenu[n].strTTL = strTTL;
 	            m_RadioMenu[n].strCMD = strCMD;
 	            m_nRadioMenu++;
-	            AdjustRadioMenu();
+				AdjustRadioMenu();
             }
         }
 		delete pBox;
@@ -14610,16 +14622,8 @@ void __fastcall TMmsstv::KRadioClick(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 
-
-// I wanna hurt my face for this. It's late and  I have no power
-// to manage 32bit app and convert frequency values to double/float whatever.
-// I would really appreciate someone fixing this...
-
-
 void __fastcall TMmsstv::PSKSendReportClick(TObject *Sender)
 {
-	// station_callsign,SP6XD,my_gridsquare,JO81ih,programid,MMSSTV,programversion,v113a
-	//  call,SP6PWS,mode,SSTV,freq,14233000,snr,8
 	SendPSKReport* reportPSK = new SendPSKReport();
 	AnsiString verid = AnsiString(VERID) + AnsiString(VERBETA);
 	reportPSK->Send(AnsiString(sys.m_Call), HisCall->Text ,AnsiString(sys.m_PSKMyLocator), LogFreq->Text , verid, REPORTER_SOURCE_MANUAL);
