@@ -1,24 +1,25 @@
 #ifndef XDOptionsH
 #define XDOptionsH
 
-#include "PSKReporter.h"
 #include <System.hpp>
+#include <vcl.h>
+#include "PSKReporter.h"
+//#include "ComLib.h"
+#include "LogFile.h"
+#include "UDPSender.h"
 
 //#pragma comment(lib, "ws2_32.lib")
 
-
-
-class SendPSKReport {
+class XDOptions {
 
 private:
-	void __fastcall SendPSKReport::TemporaryMessageTimer(TObject *Sender);
+	void __fastcall TemporaryMessageTimer(TObject *Sender);
 	void ShowTemporaryMessage(String message, int milliseconds);
 public:
-	SendPSKReport();
-	~SendPSKReport();
-
-	void Send(AnsiString myCall, AnsiString hisCall, AnsiString myLoc, AnsiString freq, AnsiString progVer, int reportType);
-
+	XDOptions();
+	~XDOptions();
+	void SendPSKReport(AnsiString myCall, AnsiString hisCall, AnsiString myLoc, AnsiString freq, AnsiString progVer, int reportType);
+	void SendUDPLog();
 };
 
 #endif

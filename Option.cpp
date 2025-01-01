@@ -1366,28 +1366,8 @@ void __fastcall TOptionDlg::PSKEnableClick(TObject *Sender)
 		ShowMessage("You must set up your QTH locator first!");
 		return;
 	}
-	int rc;
-	//According to the test code it's allowed to initialize multiple times.
-	if (PSKEnable->Checked) {
-		rc = ReporterInitialize(UnicodeString(sys.m_PSKHostname).c_str(),UnicodeString(IntToStr(sys.m_PSKPort)).c_str());
-		if (rc) {
-			  ShowMessage("PSKReporter initialization error");
-		} else {
-			  PSKAuto->Enabled = 1;
-			  PSKQso->Enabled = 1;
-		}
-	} else {
-		rc = ReporterUninitialize();
-		if (!rc) {
-			  ShowMessage("PSKReporter uninitialized");
-			  PSKAuto->Enabled = 0;
-			  PSKQso->Enabled = 0;
-		}
-	}
 }
 //---------------------------------------------------------------------------
-
-
 
 void __fastcall TOptionDlg::PSKPortKeyPress(TObject *Sender, System::WideChar &Key)
 
@@ -1504,20 +1484,27 @@ void __fastcall TOptionDlg::PSKMyLocatorExit(TObject *Sender)
 void __fastcall TOptionDlg::PSKPortExit(TObject *Sender)
 {
 	sys.m_PSKPort = PSKPort->Text.ToInt();
-	int rc = ReporterInitialize(UnicodeString(sys.m_PSKHostname).c_str(),UnicodeString(IntToStr(sys.m_PSKPort)).c_str());
-	if (rc) {
-		  ShowMessage("PSKReporter initialization error");
+	if(sys.m_PSKIsEnabled) {
+		ShowMessage("Click OK and restart the application.");
 	}
+//	ShowMessage("PSK Init in Port");
+//	int rc = ReporterInitialize(UnicodeString(sys.m_PSKHostname).c_str(),UnicodeString(IntToStr(sys.m_PSKPort)).c_str());
+//	if (rc) {
+//		  ShowMessage("PSKReporter initialization error");
+//	}
 }
 //---------------------------------------------------------------------------
 
 void __fastcall TOptionDlg::PSKHostnameExit(TObject *Sender)
 {
 	sys.m_PSKHostname = PSKHostname->Text;
-	int rc = ReporterInitialize(UnicodeString(sys.m_PSKHostname).c_str(),UnicodeString(IntToStr(sys.m_PSKPort)).c_str());
-	if (rc) {
-		  ShowMessage("PSKReporter initialization error");
+	if(sys.m_PSKIsEnabled) {
+		ShowMessage("Click OK and restart the application.");
 	}
+//	int rc = ReporterInitialize(UnicodeString(sys.m_PSKHostname).c_str(),UnicodeString(IntToStr(sys.m_PSKPort)).c_str());
+//	if (rc) {
+//		  ShowMessage("PSKReporter initialization error");
+//	}
 }
 //---------------------------------------------------------------------------
 
@@ -1537,7 +1524,38 @@ void __fastcall TOptionDlg::PSKAutoExit(TObject *Sender)
 		sys.m_PSKAuto = 1;
 	} else {
 		sys.m_PSKAuto = 0;
-    }
+	}
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TOptionDlg::PSKEnableExit(TObject *Sender)
+{
+	int rc;
+	//According to the test code it's allowed to initialize multiple times.
+	if (PSKEnable->Checked) {
+		if(sys.m_PSKIsEnabled) {
+			ShowMessage("Click OK and restart the application");
+		}
+		// In general this is wrong. I don't know why multiple initializations break
+		// reportinhg. It is what it is. If hostname,port or feature enable is chagned
+        // restart must be done.
+		rc = ReporterInitialize(UnicodeString(sys.m_PSKHostname).c_str(),UnicodeString(IntToStr(sys.m_PSKPort)).c_str());
+		if (rc) {
+			  ShowMessage("PSKReporter initialization error");
+		} else {
+			  PSKAuto->Enabled = 1;
+			  PSKQso->Enabled = 1;
+			  sys.m_PSKIsEnabled = 1;
+		}
+	} else {
+		rc = ReporterUninitialize();
+		if (!rc) {
+			  ShowMessage("PSKReporter uninitialized");
+			  PSKAuto->Enabled = 0;
+			  PSKQso->Enabled = 0;
+//			  sys.m_PSKIsEnabled = 0;
+		}
+	}
 }
 //---------------------------------------------------------------------------
 

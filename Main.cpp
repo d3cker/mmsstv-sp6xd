@@ -48,7 +48,7 @@
 #include "MmcgDlg.h"
 #include "radioset.h"
 #include "RMenuDlg.h"
-#include "UDPSender.h"
+//#include "UDPSender.h"
 #include "PSKReporter.h"
 #include "XDOptions.h"
 
@@ -561,6 +561,7 @@ else         // Windows 95 -- No build numbers provided
 //XD Options
 	sys.m_log4omAddress = "";
 	sys.m_PSKHostname = "";
+	sys.m_PSKIsEnabled = 0;
 
 	sys.m_TextList[0] = "CQ SSTV";
 	sys.m_TextList[1] = "%c";
@@ -1829,6 +1830,7 @@ void __fastcall TMmsstv::ReadRegister(void)
 			ShowMessage("PSKReporter initialization error");
 		} else {
 			PSKSendReport->Enabled = True;
+			sys.m_PSKIsEnabled = 1;
 		}
 	} else {
 			PSKSendReport->Enabled = False;
@@ -3323,9 +3325,9 @@ void __fastcall TMmsstv::TimerTimer(TObject *Sender)
 						HisCallChange(NULL);
 						//XD Options - automatically send PSK report on FSKID decode
 						if(sys.m_PSKEnable && sys.m_PSKAuto) {
-							SendPSKReport* reportPSK = new SendPSKReport();
+							XDOptions* reportPSK = new XDOptions();
 							AnsiString verid = AnsiString(VERID) + AnsiString(VERBETA);
-							reportPSK->Send(AnsiString(sys.m_Call), HisCall->Text ,AnsiString(sys.m_PSKMyLocator), LogFreq->Text , verid, REPORTER_SOURCE_AUTOMATIC);
+							reportPSK->SendPSKReport(AnsiString(sys.m_Call), HisCall->Text ,AnsiString(sys.m_PSKMyLocator), LogFreq->Text , verid, REPORTER_SOURCE_AUTOMATIC);
 							// | REPORTER_SOURCE_TENTATIVE
 							delete reportPSK;
 						}
@@ -4061,7 +4063,7 @@ void __fastcall TMmsstv::DrawSSTVNormal(short *ip, short *sp)
 			case smMP140:
 			case smMP175:
 			case smMN73:
-            case smMN110:
+			case smMN110:
             case smMN140:
 				if( ps < SSTVSET.m_KS ){               // ‹P“x
 					x = ps * pBitmapRX->Width / SSTVSET.m_KSS;
@@ -5337,7 +5339,7 @@ void __fastcall TMmsstv::RedrawAdjustSync(void)
 			case smPD160:
 				k = 2.0;
             	break;
-            case smRM8:
+			case smRM8:
             	k = 1.5;
                 break;
             case smRM12:
@@ -5381,7 +5383,7 @@ void __fastcall TMmsstv::RedrawAdjustSync(void)
                 	}
     	        }
 	    	    pos = AdjustSyncPos(pos);
-    	    	if( pos >= (int(SSTVSET.m_TW)/2) ) pos -= int(SSTVSET.m_TW);
+				if( pos >= (int(SSTVSET.m_TW)/2) ) pos -= int(SSTVSET.m_TW);
 #if MAKEPOSLOG
 				fprintf(fp, "%d\n", pos);
 #endif
@@ -8039,54 +8041,16 @@ void __fastcall TMmsstv::SBQSOClick(TObject *Sender)
 
 		//XD Options Log4OM send UDP
 		if(sys.m_log4omEnable) {
-			UDPSender* sender = new UDPSender();
-
-			if (!sender->IsInitialized()) {
-				ShowMessage("Failed to initialize UDP sender");
-				delete sender;
-				return;
-			}
-
-//			const char* message = "<call:6>SP6XD <qso_date:8>20241223 <time_on:6>133456 <mode:3>SSTV <freq:7>14.233 <rst_sent:3>595 <rst_rcvd:3>595 <eor>";
-
-			AnsiString adifMessage;
-			JSTtoUTC(&Log.m_sd);
-
-			adifMessage.sprintf(
-					"<call:%d>%s "
-					"<freq:%d>%s "
-					"<mode:%d>%s "
-					"<qso_date:%d>%s "
-					"<time_on:%d>%s "
-					"<time_off:%d>%s "
-					"<rst_sent:%d>%s "
-					"<rst_rcvd:%d>%s "
-					"<eor>",
-//				strlen(AnsiString(HisCall->Text).c_str()), AnsiString(HisCall->Text).c_str(),
-					strlen(Log.m_sd.call), Log.m_sd.call,
-					strlen(Log.GetFreqString(Log.m_sd.band,Log.m_sd.fq)), Log.GetFreqString(Log.m_sd.band,Log.m_sd.fq),
-					strlen(Log.GetModeString(Log.m_sd.mode)), Log.GetModeString(Log.m_sd.mode),
-					strlen(Log.GetDateString(&Log.m_sd,6)), Log.GetDateString(&Log.m_sd,6),
-					strlen(Log.GetTimeString(Log.m_sd.btime)), Log.GetTimeString(Log.m_sd.btime),
-					strlen(Log.GetTimeString(Log.m_sd.etime)), Log.GetTimeString(Log.m_sd.etime), // for some reason it has value of btime ...
-					strlen(Log.m_sd.ur), Log.m_sd.ur,
-					strlen(Log.m_sd.my), Log.m_sd.my
-			);
-
-			bool success = sender->SendPacket(sys.m_log4omAddress.c_str(), sys.m_log4omPort , adifMessage.c_str(), strlen(adifMessage.c_str()));
-
-			if (!success) {
-				ShowMessage("Error sending UDP packet with log.");
-			}
-
-			delete sender;
+			XDOptions* SendLog = new XDOptions();
+			SendLog->SendUDPLog();
+			delete SendLog;
 		}
 
 		//XD Options - send report to PSKReporter on QSO
 		if(sys.m_PSKEnable && sys.m_PSKQso) {
-			SendPSKReport* reportPSK = new SendPSKReport();
+			XDOptions* reportPSK = new XDOptions();
 			AnsiString verid = AnsiString(VERID) + AnsiString(VERBETA);
-			reportPSK->Send(AnsiString(sys.m_Call), AnsiString(Log.m_sd.call), AnsiString(sys.m_PSKMyLocator), AnsiString(Log.GetFreqString(Log.m_sd.band,Log.m_sd.fq)), verid, REPORTER_SOURCE_LOG);
+			reportPSK->SendPSKReport(AnsiString(sys.m_Call), AnsiString(Log.m_sd.call), AnsiString(sys.m_PSKMyLocator), AnsiString(Log.GetFreqString(Log.m_sd.band,Log.m_sd.fq)), verid, REPORTER_SOURCE_LOG);
 			delete reportPSK;
 
 		}
@@ -14624,9 +14588,9 @@ void __fastcall TMmsstv::KRadioClick(TObject *Sender)
 
 void __fastcall TMmsstv::PSKSendReportClick(TObject *Sender)
 {
-	SendPSKReport* reportPSK = new SendPSKReport();
+	XDOptions* reportPSK = new XDOptions();
 	AnsiString verid = AnsiString(VERID) + AnsiString(VERBETA);
-	reportPSK->Send(AnsiString(sys.m_Call), HisCall->Text ,AnsiString(sys.m_PSKMyLocator), LogFreq->Text , verid, REPORTER_SOURCE_MANUAL);
+	reportPSK->SendPSKReport(AnsiString(sys.m_Call), HisCall->Text ,AnsiString(sys.m_PSKMyLocator), LogFreq->Text , verid, REPORTER_SOURCE_MANUAL);
 	delete reportPSK;
 }
 

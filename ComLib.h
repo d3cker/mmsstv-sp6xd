@@ -414,6 +414,7 @@ typedef struct {
 	int m_PSKEnable;
 	int m_PSKAuto;
 	int m_PSKQso;
+    int m_PSKIsEnabled;
 
 }SYSSET;
 

@@ -273,6 +273,7 @@ __published:
 	void __fastcall PSKHostnameExit(TObject *Sender);
 	void __fastcall PSKQsoExit(TObject *Sender);
 	void __fastcall PSKAutoExit(TObject *Sender);
+	void __fastcall PSKEnableExit(TObject *Sender);
 
 private:
 	int	m_DisEvent;

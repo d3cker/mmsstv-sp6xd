@@ -5,10 +5,7 @@
 #include <vcl.h>
 #include <System.hpp>
 
-void ShowTemporaryMessage(String message, int milliseconds);
-
-
-void __fastcall SendPSKReport::TemporaryMessageTimer(TObject *Sender)
+void __fastcall XDOptions::TemporaryMessageTimer(TObject *Sender)
 {
 	// Retrieve the timer
 	TTimer *timer = dynamic_cast<TTimer *>(Sender);
@@ -29,8 +26,7 @@ void __fastcall SendPSKReport::TemporaryMessageTimer(TObject *Sender)
 	}
 }
 
-
-void SendPSKReport::ShowTemporaryMessage(String message, int milliseconds)
+void XDOptions::ShowTemporaryMessage(String message, int milliseconds)
 {
 	// Create a temporary form
 	TForm *msgForm = new TForm(Application);
@@ -63,13 +59,7 @@ void SendPSKReport::ShowTemporaryMessage(String message, int milliseconds)
 	timer->Tag = reinterpret_cast<int>(msgForm);
 }
 
-
-
-SendPSKReport::SendPSKReport() {
-
-}
-
-void SendPSKReport::Send(AnsiString myCall, AnsiString hisCall, AnsiString myLoc,AnsiString freq,AnsiString progVer,int reportType) {
+void XDOptions::SendPSKReport(AnsiString myCall, AnsiString hisCall, AnsiString myLoc,AnsiString freq,AnsiString progVer,int reportType) {
 	TFormatSettings formatSettings;
 	formatSettings.DecimalSeparator = '.';
 	double zm = StrToFloat(freq,formatSettings);
@@ -111,19 +101,68 @@ void SendPSKReport::Send(AnsiString myCall, AnsiString hisCall, AnsiString myLoc
 
 //	ShowMessage(localInformation);
 //	ShowMessage(remoteInformation);
-	ShowTemporaryMessage("Report to PSKReporter sent",3000);
 
 	int rc = ReporterSeenCallsign(remoteInformation.c_str(),localInformation.c_str(), reportType);
 
 	if(rc) {
-		ShowMessage("Error sending data to PSKReporter");
+		wchar_t buffer[1024];
+		ReporterGetInformation(buffer,1024);
+		ShowMessage(buffer);
+	} else {
+		ShowTemporaryMessage("Report to PSKReporter sent",3000);
 	}
 
 }
 
-SendPSKReport::~SendPSKReport() {
+void XDOptions::SendUDPLog() {
 
+	UDPSender* sender = new UDPSender();
 
+	if (!sender->IsInitialized()) {
+		ShowMessage("Failed to initialize UDP sender");
+		delete sender;
+		return;
+	}
+
+	AnsiString adifMessage;
+
+	JSTtoUTC(&Log.m_sd);
+
+	adifMessage.sprintf(
+			"<call:%d>%s "
+			"<freq:%d>%s "
+			"<mode:%d>%s "
+			"<qso_date:%d>%s "
+			"<time_on:%d>%s "
+			"<time_off:%d>%s "
+			"<rst_sent:%d>%s "
+			"<rst_rcvd:%d>%s "
+			"<eor>",
+			strlen(Log.m_sd.call), Log.m_sd.call,
+			strlen(Log.GetFreqString(Log.m_sd.band,Log.m_sd.fq)), Log.GetFreqString(Log.m_sd.band,Log.m_sd.fq),
+			strlen(Log.GetModeString(Log.m_sd.mode)), Log.GetModeString(Log.m_sd.mode),
+			strlen(Log.GetDateString(&Log.m_sd,6)), Log.GetDateString(&Log.m_sd,6),
+			strlen(Log.GetTimeString(Log.m_sd.btime)), Log.GetTimeString(Log.m_sd.btime),
+			strlen(Log.GetTimeString(Log.m_sd.etime)), Log.GetTimeString(Log.m_sd.etime), // for some reason it has value of btime ...
+			strlen(Log.m_sd.ur), Log.m_sd.ur,
+			strlen(Log.m_sd.my), Log.m_sd.my
+	);
+
+		bool success = sender->SendPacket(sys.m_log4omAddress.c_str(), sys.m_log4omPort , adifMessage.c_str(), strlen(adifMessage.c_str()));
+
+		if (!success) {
+			ShowMessage("Error sending UDP packet with log.");
+		}
+
+		delete sender;
 }
 
 
+
+XDOptions::XDOptions() {
+
+}
+
+XDOptions::~XDOptions() {
+
+}
